@@ -90,5 +90,19 @@ x_mon_out = x_chip_facet + params["mon_out_shift"]
 #-------------------
 geometry = []
 
-#Default 
+#Default medium is SiO2 (oxide): chip claddings, fiber cladding, and gap are oxide
+default_material = sio2
+
+#Fiber core: cylinder along x-axis (propagation axis)
+geometry += [
+    mp.Cylinder(
+        center = mp.Vector3(0.5*(x_fiber_start + x_fiber_end),0,0), #centered in x over fiber length
+        radius = params["fiber_core_radius"],
+        height=abs(x_fiber_end - x_fiber_start),
+        axis=mp.Vector3(1,0,0), # along x
+        material = fiber_core
+    )
+]
+
+
 

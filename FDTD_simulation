@@ -40,3 +40,37 @@ params = {
     # Monitors
     "mon_in_shift":  -(2.0),  # input mode monitor position relative to chip facet (in fiber) [um]
     "mon_out_shift":  1.0,    # output mode monitor position inside array from facet [um]
+}
+
+#--------------------------------
+#Derived quantities
+#--------------------------------
+um=1.0
+fcen = 1.0/params["lambda_cen"]
+df = params["fwidth_rel"]*fcen
+
+# Convenience media
+sio2 = mp.Medium(index=params["n_clad"]) #used to create a material object by mp.Medium. The refractive index is being set by the value of params["n_clad"]
+sin = mp.Medium(index=params["n_core"]) # used to create SiN material object. The refractive index is set as 2
+fiber_core = mp.Medium(index=params["fiber_core_n"]) # used to create a material object called fiber_core. The refractive index is set as 1.449
+
+# Cell size(x along propagation; y lateral; z vertical)
+# Left: fiber start -> fiber facet -> gap -> chip facet -> array region -> PML
+left_len = params["fiber_length"] + params["fiber_gap"] #the length of the input section, which includes an optical fiber and a small fiber gap before the chip
+right_len = params["array_length"] #the length of the main device being simulated (array_length)
+sx = left_len + right_len + 2*params["pml_thick"] #total length of the simulation cell along the direction of light propagation the thickness of the PMLs at both the start and end of the x-axis.
+
+# y-span to include 3 WGs per layer with pitch plus margin
+wg_half_span = params["pitch"] # from center to outer WG center
+sy = 2*(wg_half_span + params["w_outer"]/2.0 + params["pad_y"] + 2*params["pml_thick"]
+
+# z-span:two layers around z=±t_mid/2 with t_core thickness; add oxide above/below
+z_upper = (+0.5*params["t_mid"] + 0.5*params["t_core"])
+z_lower = (-0.5*params["t_mid"] - 0.5*params["t_core"])
+sz = (params["pad_z_top"] +(z_upper + params["t_core"]/2) # room above upper core
+    -(z_lower - params["t_core"]/2) + params["pad_z_bot"]) + 2*params["pml_thick"]
+
+#Absolute x-positions (facet at x=0)
+x_pml_left = -0.5*sx + params["pml_thick"]
+x_pml_right = +0.5*sx - params["pml_thick"]
+x_fiber_start

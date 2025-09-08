@@ -1,0 +1,42 @@
+#!/usr/bin/env python3
+# meep_fiber2six_array.py
+# 3D FDTD in MEEP: fiber (step-index cylinder) -> 6-waveguide (2-layer x 3) array
+# Computes per-facet coupling efficiency via eigenmode decomposition.
+# Units: micron (um)
+
+import meep as mp
+import numpy as np
+
+# -----------------------------
+# User parameters (edit here)
+# -----------------------------
+params = {
+    # Spectral setup
+    "lambda_cen": 1.575,     # center wavelength [um] (paper peak ~1575 nm)
+    "fwidth_rel": 0.04,      # fractional bandwidth of Gaussian pulse (~4%)
+    # Fiber geometry (step-index)
+    "fiber_core_n": 1.449,   # ~silica core (approx); adjust to your datasheet
+    "fiber_clad_n": 1.4449,  # ~silica cladding / index-matching region
+    "fiber_core_radius": 4.30,     # PM-1550 core radius ~4.25–4.3 um (paper discussion)
+    "fiber_clad_radius": 8.50,     # truncated cladding radius used in sim (Fig.1(a) shows 8.5 um)
+    "fiber_length": 8.0,           # finite fiber length inside cell [um]
+    "fiber_gap": 0.2,              # fiber facet-to-chip facet gap [um] (filled with index-matching fluid)
+    # Six-WG array (SiN-on-oxide), two layers
+    "n_core": 2.0,            # SiN ~2.0 (non-dispersive approx)
+    "n_clad": 1.4449,         # SiO2
+    "t_core": 0.08,           # each SiN layer thickness [um] ~80 nm (paper)
+    "t_mid": 0.60,            # inter-layer oxide thickness between two SiN layers [um] (tune)
+    "pitch": 2.20,            # lateral pitch between adjacent WGs [um] (paper Fig.5 caption)
+    "w_center": 0.561,        # center WG width [um] (paper best case)
+    "w_outer": 0.490,         # outer WG width [um] (paper best case)
+    # Array length after the facet (constant cross-section region)
+    "array_length": 6.0,      # [um] propagation region to place output monitor
+    # Domain / mesh
+    "pad_y": 3.0,             # side padding beyond outermost WG [um]
+    "pad_z_top": 3.0,         # top oxide thickness above upper layer [um]
+    "pad_z_bot": 3.0,         # bottom oxide thickness below lower layer [um]
+    "pml_thick": 2.0,         # PML thickness [um]
+    "resolution": 50,         # pixels per um (20 nm grid). For production: 60–80.
+    # Monitors
+    "mon_in_shift":  -(2.0),  # input mode monitor position relative to chip facet (in fiber) [um]
+    "mon_out_shift":  1.0,    # output mode monitor position inside array from facet [um]

@@ -73,4 +73,22 @@ sz = (params["pad_z_top"] +(z_upper + params["t_core"]/2) # room above upper cor
 #Absolute x-positions (facet at x=0)
 x_pml_left = -0.5*sx + params["pml_thick"]
 x_pml_right = +0.5*sx - params["pml_thick"]
-x_fiber_start
+x_fiber_start = x_pml_left
+x_fiber_end = -params["fiber_gap"]    #fiber facet (end of cylinder)
+x_chip_facet = 0.0    #start of waveguide array
+x_array_end = params["array_length"]
+
+#Source plane inside fiber (where geometry is invariant)
+x_src = x_chip_facet + params["mou_in_shift"]
+
+#Mode monitors
+x_mon_in = x_chip_facet + params["mon_in_shift"]
+x_mon_out = x_chip_facet + params["mon_out_shift"]
+
+#-------------------
+#Geometry definition
+#-------------------
+geometry = []
+
+#Default 
+

@@ -58,15 +58,21 @@ fiber_core = mp.Medium(index=params["fiber_core_n"]) # used to create a material
 # Left: fiber start -> fiber facet -> gap -> chip facet -> array region -> PML
 left_len = params["fiber_length"] + params["fiber_gap"] #the length of the input section, which includes an optical fiber and a small fiber gap before the chip
 right_len = params["array_length"] #the length of the main device being simulated (array_length)
-sx = left_len + right_len + 2*params["pml_thick"] #total length of the simulation cell along the direction of light propagation the thickness of the PMLs at both the start and end of the x-axis.
+sx = left_len + right_len + 2*params["pml_thick"] 
+#total length of the simulation cell along the direction of light propagation the thickness of the PMLs at both the start and end of the x-axis.
 
 # y-span to include 3 WGs per layer with pitch plus margin
+# calculates the total width of the simulation cell. The comments suggest the setup is wide enough to inlcude three parallel waveguides.
+# The calculation is done by figuring out the span from the center to one edge and then doubling it. The span from the center outwards includes:
 wg_half_span = params["pitch"] # from center to outer WG center
-sy = 2*(wg_half_span + params["w_outer"]/2.0 + params["pad_y"] + 2*params["pml_thick"]
+sy = 2*(wg_half_span + params["w_outer"]/2.0 + params["pad_y"] + 2*params["pml_thick"] 
+# params["pitch"]: The distance from the central waveguide to an outer waveguide, params["w_outer"]/2.0: Half of the width of the outer waveguide, to get to its outer edge.
+# params["pad_y"]: Extra padding space to the margin,  
 
 # z-span:two layers around z=±t_mid/2 with t_core thickness; add oxide above/below
-z_upper = (+0.5*params["t_mid"] + 0.5*params["t_core"])
-z_lower = (-0.5*params["t_mid"] - 0.5*params["t_core"])
+# Calculates the total vertical extent from the bottom edge of the lower core layer to the top edge of the upper core layer.
+z_upper = (+0.5*params["t_mid"] + 0.5*params["t_core"]) #vertical distance between the centers of the two cores + thickness of individual core
+z_lower = (-0.5*params["t_mid"] - 0.5*params["t_core"]) #starts at the center of the lower core (-0.5*t_mid) and subtracts half its thickness (-0.5*t_core) to find its bottom surface
 sz = (params["pad_z_top"] +(z_upper + params["t_core"]/2) # room above upper core
     -(z_lower - params["t_core"]/2) + params["pad_z_bot"]) + 2*params["pml_thick"]
 
@@ -103,6 +109,4 @@ geometry += [
         material = fiber_core
     )
 ]
-
-
 

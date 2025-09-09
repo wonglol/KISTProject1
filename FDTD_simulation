@@ -77,7 +77,7 @@ sz = (params["pad_z_top"] +(z_upper + params["t_core"]/2) # room above upper cor
     -(z_lower - params["t_core"]/2) + params["pad_z_bot"]) + 2*params["pml_thick"]
 
 #Absolute x-positions (facet at x=0)
-x_pml_left = -0.5*sx + params["pml_thick"]
+x_pml_left = -0.5*sx + params["pml_thick"] #coordinates for the inner edges of the PMLs.
 x_pml_right = +0.5*sx - params["pml_thick"]
 x_fiber_start = x_pml_left
 x_fiber_end = -params["fiber_gap"]    #fiber facet (end of cylinder)

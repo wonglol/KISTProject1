@@ -65,7 +65,7 @@ sx = left_len + right_len + 2*params["pml_thick"]
 # calculates the total width of the simulation cell. The comments suggest the setup is wide enough to inlcude three parallel waveguides.
 # The calculation is done by figuring out the span from the center to one edge and then doubling it. The span from the center outwards includes:
 wg_half_span = params["pitch"] # from center to outer WG center
-sy = 2*(wg_half_span + params["w_outer"]/2.0 + params["pad_y"] + 2*params["pml_thick"] 
+sy = 2*(wg_half_span + params["w_outer"]/2.0 + params["pad_y"] + 2*params["pml_thick"]) 
 # params["pitch"]: The distance from the central waveguide to an outer waveguide, params["w_outer"]/2.0: Half of the width of the outer waveguide, to get to its outer edge.
 # params["pad_y"]: Extra padding space to the margin,  
 
@@ -109,4 +109,3 @@ geometry += [
         material = fiber_core
     )
 ]
-

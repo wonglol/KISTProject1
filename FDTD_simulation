@@ -109,3 +109,113 @@ geometry += [
         material = fiber_core
     )
 ]
+
+# Fiber core: cylinder along x-axis (propagation axis)
+geometry += [
+    mp.Cylinder(
+        center=mp.Vector3(0.5*(x_fiber_start + x_fiber_end), 0, 0),    # centered in x over fiber length
+        radius=params["fiber_core_radius"],
+        height=abs(x_fiber_end - x_fiber_start),
+        axis=mp.Vector3(1, 0, 0),  # along x
+        material=fiber_core
+    )
+]
+
+# Six SiN waveguides (constant cross-section segment after chip facet)
+# Layer centers in z: ±(t_mid/2)
+z_layer_up   = +0.5*params["t_mid"]
+z_layer_down = -0.5*params["t_mid"]
+
+# common helper to add one rectangular WG bar extruded along x
+def add_wg(yc, zc, width_y):
+    geometry.append(
+        mp.Block(
+            size=mp.Vector3(x_array_end - x_chip_facet, width_y, params["t_core"]),
+            center=mp.Vector3(0.5*(x_chip_facet + x_array_end), yc, zc),
+            material=sin
+        )
+    )
+
+# y-positions for three WGs per layer: [-pitch, 0, +pitch]
+ys = [-params["pitch"], 0.0, +params["pitch"]]
+
+# Upper layer: center uses w_center; outers use w_outer
+add_wg(ys[1], z_layer_up,   params["w_center"])
+add_wg(ys[0], z_layer_up,   params["w_outer"])
+add_wg(ys[2], z_layer_up,   params["w_outer"])
+# Lower layer:
+add_wg(ys[1], z_layer_down, params["w_center"])
+add_wg(ys[0], z_layer_down, params["w_outer"])
+add_wg(ys[2], z_layer_down, params["w_outer"])
+
+# -----------------------------
+# Sources (fiber LP01 eigenmode)
+# -----------------------------
+sources = [
+    mp.EigenModeSource(
+        src=mp.GaussianSource(frequency=fcen, fwidth=df),
+        center=mp.Vector3(x_src, 0, 0),
+        size=mp.Vector3(0, sy-2*params["pml_thick"], sz-2*params["pml_thick"]),  # cross-section plane
+        direction=mp.X,               # +x propagation
+        eig_band=1,                   # fundamental fiber mode
+        eig_parity=mp.NO_PARITY,      # 3D: let MEEP choose
+        eig_match_freq=True
+    )
+]
+
+# -----------------------------
+# Simulation object
+# -----------------------------
+sim = mp.Simulation(
+    cell_size=mp.Vector3(sx, sy, sz),
+    boundary_layers=[mp.PML(params["pml_thick"])],
+    geometry=geometry,
+    sources=sources,
+    resolution=params["resolution"],
+    default_material=default_material,
+    symmetries=[] # no symmetry (fiber + 2-layer is symmetric but keep general)
+)
+
+# -----------------------------
+# Mode monitors for Pin/Pout
+# -----------------------------
+mon_in = sim.add_mode_monitor(
+    fcen, 0, 1,
+    mp.ModeRegion(center=mp.Vector3(x_mon_in, 0, 0),
+                  size=mp.Vector3(0, sy-2*params["pml_thick"], sz-2*params["pml_thick"]))
+)
+
+mon_out = sim.add_mode_monitor(
+    fcen, 0, 1,
+    mp.ModeRegion(center=mp.Vector3(x_mon_out, 0, 0),
+                  size=mp.Vector3(0, sy-2*params["pml_thick"], sz-2*params["pml_thick"]))
+)
+
+# -----------------------------
+# Run
+# -----------------------------
+# Stop when fields decay at a point in the output region (pulsed source)
+probe_pt = mp.Vector3(x_mon_out + 0.5, 0, 0)
+
+sim.run(until_after_sources=mp.stop_when_fields_decayed(
+    50, mp.Ez, probe_pt, 1e-7)
+)
+
+# -----------------------------
+# Post-processing: Coupling efficiency
+# -----------------------------
+# Expand fields onto local eigenmodes at each monitor.
+# band=1 corresponds to fundamental mode in that cross section:
+# - 'mon_in': fiber LP01
+# - 'mon_out': 6-WG supermode (fundamental TE-like of the array)
+coeff_in  = sim.get_eigenmode_coefficients(mon_in,  [1])
+coeff_out = sim.get_eigenmode_coefficients(mon_out, [1])
+
+# alpha are forward-going amplitudes; power ~ |alpha|^2
+a_in  = coeff_in.alpha[0,0,0]   # [mode_index, frequency_index, component]
+a_out = coeff_out.alpha[0,0,0]
+
+P_in  = np.abs(a_in)**2
+P_out = np.abs(a_out)**2
+eta   = P_out / P_in
+
